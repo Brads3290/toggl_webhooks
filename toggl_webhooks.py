@@ -33,7 +33,7 @@ async def main():
             tc.handle(hook['actions'], hook['models'], generate_message_handler(hook['method'], hook['url']))
 
         # Run TogglClient until CTRL+C is pressed
-        print('Running Toggl client.. Press CTRL+C to stop')
+        print('Listening for events.. Press CTRL+C to stopp')
         await tc.run(handle_os_signals=True)
 
     print('Done.')

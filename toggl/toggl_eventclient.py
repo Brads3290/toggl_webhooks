@@ -35,6 +35,7 @@ class TogglClient:
 
         await self.start()
 
+        self.__log('Running Toggl client..')
         while self.__should_run and not self.__run_task.done():
             await asyncio.sleep(0.1)
 
@@ -81,8 +82,6 @@ class TogglClient:
     async def __run(self):
         if not self.is_open():
             raise Exception('ToggleClient attempted to run before .open() was called.')
-
-        self.__log('Running TogglClient..')
 
         if not self.__ws_client.is_authenticated():
             await self.__ws_client.authenticate(self.__api_token)

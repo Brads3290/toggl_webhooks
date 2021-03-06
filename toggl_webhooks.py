@@ -1,20 +1,34 @@
 import asyncio
 import json
 import requests
+import sys
 from toggl.toggl_websocket import TogglSocketMessage
 from toggl.toggl_eventclient import TogglClient
 
 
+def usage():
+    print('Usage:')
+    print('  toggl_webhooks.py <config file> [-v|--verbose]')
+    sys.exit(0)
+
+
 async def main():
 
+    # Check command line args. First argument should be pointing to the config file.
+    if len(sys.argv) <= 1:
+        usage()
+
     # Load config
+    print('Loading config..')
     with open('toggl_webhooks.json', 'r') as f:
         config = json.load(f)
 
     # Create a TogglClient and open it (opens a connection to the Toggl websocket)
-    async with TogglClient(config['api_token']) as tc:
+    verbose = '-v' in sys.argv or '--verbose' in sys.argv
+    async with TogglClient(config['api_token'], verbose=verbose) as tc:
 
         # Configure the TogglClient to handle the hooks configured in the config file by calling message_handler
+        print('Configuring hooks..')
         for hook in config['hooks']:
             tc.handle(hook['actions'], hook['models'], generate_message_handler(hook['method'], hook['url']))
 

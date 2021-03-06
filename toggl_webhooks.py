@@ -11,13 +11,8 @@ async def main():
         config = json.load(f)
 
     async with TogglClient(config['api_token']) as tc:
-        for hook_conf in config['hooks']:
-            method = hook_conf['method']
-            url = hook_conf['url']
-            actions = hook_conf['actions']
-            models = hook_conf['models']
-
-            tc.handle(actions, models, generate_message_handler(method, url))
+        for hook in config['hooks']:
+            tc.handle(hook['actions'], hook['models'], generate_message_handler(hook['method'], hook['url']))
 
         await tc.run(handle_os_signals=True)
 

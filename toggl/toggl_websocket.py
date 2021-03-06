@@ -43,7 +43,7 @@ class TogglSocketMessage:
     def get_action(self):
         return self._action
 
-    def make_serialisable(self):
+    def to_dict(self):
         return {
             'action': self._action,
             'model': self.__model,
@@ -70,8 +70,8 @@ class TogglSocketTimeEntryMessage(TogglSocketMessage):
         super().__init__(model, definition)
         return
 
-    def make_serialisable(self):
-        ret = super().make_serialisable()
+    def to_dict(self):
+        ret = super().to_dict()
 
         # We know what type it is, so we can construct better data
         data = {
@@ -108,8 +108,8 @@ class TogglSocketProjectMessage(TogglSocketMessage):
         super().__init__(model, definition)
         return
 
-    def make_serialisable(self):
-        ret = super().make_serialisable()
+    def to_dict(self):
+        ret = super().to_dict()
 
         # We know what type it is, so we can construct better data
         data = {
@@ -147,8 +147,8 @@ class TogglSocketTaskMessage(TogglSocketMessage):
         super().__init__(model, definition)
         return
 
-    def make_serialisable(self):
-        ret = super().make_serialisable()
+    def to_dict(self):
+        ret = super().to_dict()
 
         # We know what type it is, so we can construct better data
         data = {
@@ -178,8 +178,8 @@ class TogglSocketClientMessage(TogglSocketMessage):
         super().__init__(model, definition)
         return
 
-    def make_serialisable(self):
-        ret = super().make_serialisable()
+    def to_dict(self):
+        ret = super().to_dict()
 
         # We know what type it is, so we can construct better data
         data = {
@@ -207,8 +207,8 @@ class TogglSocketTagMessage(TogglSocketMessage):
         super().__init__(model, definition)
         return
 
-    def make_serialisable(self):
-        ret = super().make_serialisable()
+    def to_dict(self):
+        ret = super().to_dict()
 
         # We know what type it is, so we can construct better data
         data = {

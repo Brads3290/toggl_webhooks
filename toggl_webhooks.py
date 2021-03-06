@@ -31,7 +31,7 @@ def generate_message_handler(method: str, url: str):
 
 
 async def message_handler(action: str, model: str, method: str, url: str, msg: TogglSocketMessage):
-    res = requests.request(method, url, data=msg.make_serialisable())
+    res = requests.request(method, url, data=msg.to_dict())
     print(f'{action} {model} -> {res.status_code} {method} {url}')
 
     return

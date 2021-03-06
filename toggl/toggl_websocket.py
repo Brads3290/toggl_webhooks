@@ -327,7 +327,7 @@ class TogglSocket:
 
     async def __run_ws(self):
         while self.__should_run_ws:
-            next_msg_task = asyncio.create_task(self.__ws.recv())
+            next_msg_task = asyncio.create_task(self.__ws_recv())
 
             while not next_msg_task.done() and self.__should_run_ws:
                 await asyncio.sleep(0.1)
@@ -349,6 +349,11 @@ class TogglSocket:
                     pass
 
         return
+
+    async def __ws_recv(self):
+        msg = await self.__ws.recv()
+        print(f'Received: {msg}')
+        return msg
 
     @staticmethod
     def __is_ping(msg) -> bool:

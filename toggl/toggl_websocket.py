@@ -283,8 +283,8 @@ class TogglSocket:
             raise
 
         reply = json.loads(rawReply)
-
         self.__session_id = reply['session_id']
+        self.__is_authenticated = True
         return
 
     async def next_message(self) -> Union[TogglSocketMessage, None]:
@@ -304,6 +304,9 @@ class TogglSocket:
 
     def is_open(self):
         return self.__is_open
+
+    def is_authenticated(self):
+        return self.__is_authenticated
 
     async def __aenter__(self):
         await self.open()

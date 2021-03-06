@@ -54,8 +54,16 @@ class TogglClient:
         await self.wait()
         return
 
-    def handle(self, action: str, method: str, handler: _MESSAGE_HANDLER):
-        self.__handlers.append((action, method, handler))
+    def handle(self, actions: str, models: str, handler: _MESSAGE_HANDLER):
+        if type(actions) is not list:
+            actions = [actions]
+
+        if type(models) is not list:
+            models = [models]
+
+        for action in actions:
+            for model in models:
+                self.__handlers.append((action, model, handler))
 
     def is_open(self):
         return self.__ws_client.is_open()

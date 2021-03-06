@@ -14,10 +14,10 @@ async def main():
         for hook_conf in config['hooks']:
             method = hook_conf['method']
             url = hook_conf['url']
+            actions = hook_conf['actions']
+            models = hook_conf['models']
 
-            for action in hook_conf['actions']:
-                for model in hook_conf['models']:
-                    tc.handle(action, model, generate_message_handler(method, url))
+            tc.handle(actions, models, generate_message_handler(method, url))
 
         await tc.run(handle_os_signals=True)
 

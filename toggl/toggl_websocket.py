@@ -232,9 +232,10 @@ class TogglSocketTagMessage(TogglSocketMessage):
 
 
 class TogglSocket:
-    def __init__(self, endpoint, origin):
+    def __init__(self, endpoint, origin, verbose=False):
         self.__endpoint = endpoint
         self.__origin = origin
+        self.__verbose = verbose
         self.__session_id = None
         self.__should_run_ws = False
         self.__run_ws_task = None
@@ -252,6 +253,7 @@ class TogglSocket:
         self.__should_run_ws = True
         self.__run_ws_task = asyncio.create_task(self.__run_ws())
         self.__is_open = True
+        self.__log('Opened TogglSocket.')
         return
 
     async def close(self):
@@ -262,9 +264,12 @@ class TogglSocket:
         await self.__run_ws_task
         await self.__ws.close()
         self.__is_open = False
+        self.__log('Closed TogglSocket.')
         return
 
     async def authenticate(self, token):
+        self.__log(f'Authenticating with Toggl server.. : {self.__endpoint}')
+
         if not self.is_open():
             raise Exception('Cannot authenticate because socket is not open.')
 
@@ -285,6 +290,9 @@ class TogglSocket:
         reply = json.loads(rawReply)
         self.__session_id = reply['session_id']
         self.__is_authenticated = True
+
+        self.__log('Successfully authenticated with Toggl server.')
+
         return
 
     async def next_message(self) -> Union[TogglSocketMessage, None]:
@@ -352,8 +360,14 @@ class TogglSocket:
 
     async def __ws_recv(self):
         msg = await self.__ws.recv()
-        print(f'Received: {msg}')
+        self.__log(f'Received: {msg}')
         return msg
+
+    def __log(self, msg):
+        if not self.__verbose:
+            return
+
+        print(msg)
 
     @staticmethod
     def __is_ping(msg) -> bool:

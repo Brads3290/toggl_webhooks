@@ -10,14 +10,15 @@ _MESSAGE_HANDLER = Callable[[str, str, TogglSocketMessage], Coroutine[Any, Any, 
 
 
 class TogglClient:
-    def __init__(self, api_token: str, ws_endpoint=_WS_ENDPOINT, ws_origin=_WS_ORIGIN):
+    def __init__(self, api_token: str, ws_endpoint=_WS_ENDPOINT, ws_origin=_WS_ORIGIN, verbose=False):
         self.__api_token = api_token
         self.__ws_endpoint = ws_endpoint
         self.__ws_origin = ws_origin
+        self.__verbose = verbose
 
         self.__should_run = True
         self.__run_task: Union[None, asyncio.Task] = None
-        self.__ws_client = TogglSocket(self.__ws_endpoint, self.__ws_origin)
+        self.__ws_client = TogglSocket(self.__ws_endpoint, self.__ws_origin, verbose=self.__verbose)
 
         self.__handlers: List[Tuple[str, str, _MESSAGE_HANDLER]] = []
         return
@@ -72,12 +73,16 @@ class TogglClient:
         if not self.is_open():
             raise Exception('TogglClient attempted initialisation before .open() was called.')
 
+        self.__log('Initialising TogglClient..')
+
         await self.__ws_client.authenticate(self.__api_token)
         return
 
     async def __run(self):
         if not self.is_open():
             raise Exception('ToggleClient attempted to run before .open() was called.')
+
+        self.__log('Running TogglClient..')
 
         if not self.__ws_client.is_authenticated():
             await self.__ws_client.authenticate(self.__api_token)
@@ -110,6 +115,7 @@ class TogglClient:
         return
 
     def __signal_handler(self, sig, frame):
+        print('TogglClient detected SIGINT')
         self.__should_run = False
         return
 
@@ -120,3 +126,9 @@ class TogglClient:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.close()
         return
+
+    def __log(self, msg):
+        if not self.__verbose:
+            return
+
+        print(msg)

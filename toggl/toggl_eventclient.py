@@ -93,7 +93,7 @@ class TogglClient:
         for candidate in self.__handlers:
             a, m, h = candidate
 
-            if a == action and m == model:
+            if (a == '*' or a == action) and (m == '*' or m == model):
                 tasks.append(asyncio.create_task(h(action, model, msg)))
 
         for t in tasks:

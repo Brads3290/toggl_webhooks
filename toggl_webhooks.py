@@ -36,6 +36,8 @@ async def main():
         print('Running Toggl client.. Press CTRL+C to stop')
         await tc.run(handle_os_signals=True)
 
+    print('Done.')
+
 
 # Utility method to generate the handler. This is necessary because we want to pass method and url
 # in a closure, and we can't use a lambda because TogglClient expects an async handler (which lambdas don't

@@ -1,0 +1,11 @@
+{
+  "api_token": "<your_api_key>",
+  "hooks": [
+    {
+      "actions": ["INSERT", "UPDATE"],
+      "models": ["time_entry"],
+      "method": "POST",
+      "url": "https://www.example.com"
+    }
+  ]
+}

@@ -10,7 +10,8 @@ _MESSAGE_HANDLER = Callable[[str, str, TogglSocketMessage], Coroutine[Any, Any, 
 
 
 class TogglClient:
-    """A wrapper around TogglSocket with a higher level API and ability to call handlers in response
+    """
+    A wrapper around TogglSocket with a higher level API and ability to call handlers in response
     to events. TogglClient will automatically authenticate with the Toggl Server using the API key
     passed in the constructor.
 

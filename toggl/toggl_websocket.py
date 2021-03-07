@@ -3,6 +3,7 @@ import websockets
 import json
 import dateutil.parser
 import queue
+import toggl.toggl_values as toggl_values
 
 from typing import Union
 
@@ -10,15 +11,15 @@ from typing import Union
 class TogglSocketMessage:
     def __new__(cls, model, definition):
         if cls is TogglSocketMessage:
-            if model == 'time_entry':
+            if model == toggl_values.M_TIME_ENTRY:
                 return super(TogglSocketMessage, cls).__new__(TogglSocketTimeEntryMessage)
-            elif model == 'project':
+            elif model == toggl_values.M_PROJECT:
                 return super(TogglSocketMessage, cls).__new__(TogglSocketProjectMessage)
-            elif model == 'task':
+            elif model == toggl_values.M_TASK:
                 return super(TogglSocketMessage, cls).__new__(TogglSocketTaskMessage)
-            elif model == 'client':
+            elif model == toggl_values.M_CLIENT:
                 return super(TogglSocketMessage, cls).__new__(TogglSocketClientMessage)
-            elif model == 'tag':
+            elif model == toggl_values.M_TAG:
                 return super(TogglSocketMessage, cls).__new__(TogglSocketTagMessage)
 
         return super(TogglSocketMessage, cls).__new__(cls, model, definition)

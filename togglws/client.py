@@ -1,10 +1,10 @@
 import signal
 import asyncio
-from toggl.toggl_websocket import TogglSocket, TogglSocketMessage
+from togglws.socket import TogglSocket, TogglSocketMessage
 from typing import Union, List, Callable, Coroutine, Tuple, Any
 
 
-DEFAULT_WS_ENDPOINT = "wss://track.toggl.com/stream"
+DEFAULT_WS_ENDPOINT = "wss://track.togglws.com/stream"
 DEFAULT_WS_ORIGIN = "https://track.toggl.com"
 _MESSAGE_HANDLER = Callable[[str, str, TogglSocketMessage], Coroutine[Any, Any, Any]]
 
@@ -104,7 +104,7 @@ class TogglClient:
         Register a handler to be called when the TogglClient receives an event matching those listed in the
         'actions' and 'models' parameters.
 
-        The possible action and model values are specified in toggl_values.py.
+        The possible action and model values are specified in values.py.
 
         You can use a wildcard - '*' - to specify any action or any model.
 

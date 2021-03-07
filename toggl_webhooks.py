@@ -2,8 +2,7 @@ import asyncio
 import json
 import requests
 import sys
-from togglws.socket import TogglSocketMessage
-from togglws.client import TogglClient
+from togglws import TogglClient, TogglSocketMessage
 
 
 def usage():

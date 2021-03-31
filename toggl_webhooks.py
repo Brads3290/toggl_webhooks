@@ -61,7 +61,7 @@ async def message_handler(action: str, model: str, method: str, url: str, msg: T
     assert trials > 1
     trial = 0
     while trial < trials:
-        res = requests.request(method, url, data=msg.to_dict(), **request_kwargs)
+        res = requests.request(method, url, json=msg.to_dict(), **request_kwargs)
         if res.status_code >= 400:
             print(f'{action} {model} -> {res.status_code} {method} {url} {res.text}')
             # retry after a while in case of bad response

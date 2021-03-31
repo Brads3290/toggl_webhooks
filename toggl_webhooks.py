@@ -1,7 +1,9 @@
 import asyncio
 import json
-import requests
 import sys
+
+import requests
+
 from togglws import TogglClient, TogglSocketMessage
 
 
@@ -12,7 +14,6 @@ def usage():
 
 
 async def main():
-
     # Check command line args. First argument should be pointing to the config file.
     if len(sys.argv) <= 1:
         usage()
@@ -29,7 +30,11 @@ async def main():
         # Configure the TogglClient to handle the hooks configured in the config file by calling message_handler
         print('Configuring hooks..')
         for hook in config['hooks']:
-            tc.handle(hook['actions'], hook['models'], generate_message_handler(hook['method'], hook['url']))
+            actions = hook.pop('actions')
+            models = hook.pop('models')
+            method = hook.pop('method')
+            url = hook.pop('url')
+            tc.handle(actions, models, generate_message_handler(method, url, **hook))
 
         # Run TogglClient until CTRL+C is pressed
         print('Listening for events.. Press CTRL+C to stopp')
@@ -41,21 +46,30 @@ async def main():
 # Utility method to generate the handler. This is necessary because we want to pass method and url
 # in a closure, and we can't use a lambda because TogglClient expects an async handler (which lambdas don't
 # support)
-def generate_message_handler(method: str, url: str):
+def generate_message_handler(method: str, url: str, **kwargs):
     async def message_handler_outer(action, model, msg: TogglSocketMessage):
-        await message_handler(action, model, method, url, msg)
-        return
+        await message_handler(action, model, method, url, msg, **kwargs)
 
     return message_handler_outer
 
 
 # The actual handler; in this case, it just sends the data to the server in the manner defined by
 # the config file.
-async def message_handler(action: str, model: str, method: str, url: str, msg: TogglSocketMessage):
-    res = requests.request(method, url, data=msg.to_dict())
-    print(f'{action} {model} -> {res.status_code} {method} {url}')
-
-    return
+async def message_handler(action: str, model: str, method: str, url: str, msg: TogglSocketMessage,
+                          trials=None, **request_kwargs):
+    trials = trials or 1
+    assert trials > 1
+    trial = 0
+    while trial < trials:
+        res = requests.request(method, url, data=msg.to_dict(), **request_kwargs)
+        if res.status_code >= 400:
+            print(f'{action} {model} -> {res.status_code} {method} {url} {res.text}')
+            # retry after a while in case of bad response
+            await asyncio.sleep(2 ** trial)
+            trial += 1
+            continue
+        print(f'{action} {model} -> {res.status_code} {method} {url}')
+        break
 
 
 if __name__ == '__main__':

@@ -1,10 +1,17 @@
 import asyncio
 import json
+import logging
 import sys
 
 import requests
 
 from togglws import TogglClient, TogglSocketMessage
+
+logger = logging.getLogger(__name__)
+formatter = logging.Formatter('%(asctime)s (%(filename)s:%(lineno)d) %(levelname)s: %(message)s')
+stdout_handler = logging.StreamHandler(sys.stdout)
+stdout_handler.setFormatter(formatter)
+logger.addHandler(stdout_handler)
 
 
 def usage():
@@ -18,17 +25,19 @@ async def main():
     if len(sys.argv) <= 1:
         usage()
 
+    verbose = '-v' in sys.argv or '--verbose' in sys.argv
+    logger.setLevel(logging.DEBUG if verbose else logging.INFO)
+
     # Load config
-    print('Loading config..')
+    logger.debug('Loading config..')
     with open(sys.argv[1], 'r') as f:
         config = json.load(f)
 
     # Create a TogglClient and open it (opens a connection to the Toggl websocket)
-    verbose = '-v' in sys.argv or '--verbose' in sys.argv
-    async with TogglClient(config['api_token'], verbose=verbose) as tc:
+    async with TogglClient(config['api_token'], logger=logger) as tc:
 
         # Configure the TogglClient to handle the hooks configured in the config file by calling message_handler
-        print('Configuring hooks..')
+        logger.debug('Configuring hooks..')
         for hook in config['hooks']:
             actions = hook.pop('actions')
             models = hook.pop('models')
@@ -37,10 +46,10 @@ async def main():
             tc.handle(actions, models, generate_message_handler(method, url, **hook))
 
         # Run TogglClient until CTRL+C is pressed
-        print('Listening for events.. Press CTRL+C to stopp')
+        logger.info('Listening for events.. Press CTRL+C to stop')
         await tc.run(handle_os_signals=True)
 
-    print('Done.')
+    logger.debug('Done.')
 
 
 # Utility method to generate the handler. This is necessary because we want to pass method and url
@@ -63,21 +72,23 @@ async def message_handler(action: str, model: str, method: str, url: str, msg: T
     while True:
         trial += 1
         if trial > trials:
-            print(f'{action} {model} -> {method} {url} stop trials')
+            logger.error(f'{action} {model} -> {method} {url} stop trials')
             break
         try:
             res = requests.request(method, url, json=msg.to_dict(), **request_kwargs)
-        except requests.RequestException:
-            print(f'{action} {model} -> {method} {url} exception, trial: {trial}. retrying')
+        except requests.RequestException as e:
+            logger.warning(f'{action} {model} -> {method} {url} failed, trial: {trial}. retrying')
+            logger.exception(e)
             # retry after a while in case of exception
             await asyncio.sleep(2 ** (trial - 1))
             continue
         if res.status_code >= 400:
-            print(f'{action} {model} -> {res.status_code} {method} {url} failed, trial: {trial}. retrying')
+            logger.warning(f'{action} {model} -> {res.status_code} {method} {url} failed, trial: {trial}. retrying')
+            logger.debug(f'{action} {model} -> {res.status_code} {method} {url} response: {res.text}')
             # retry after a while in case of bad response
             await asyncio.sleep(2 ** (trial - 1))
             continue
-        print(f'{action} {model} -> {res.status_code} {method} {url}')
+        logger.info(f'{action} {model} -> {res.status_code} {method} {url}')
         break
 
 

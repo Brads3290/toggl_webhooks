@@ -1,11 +1,13 @@
 import asyncio
-import websockets
 import json
-import dateutil.parser
+import logging
 import queue
-import togglws.values as values
-
 from typing import Union
+
+import dateutil.parser
+import websockets
+
+from togglws import values
 
 
 class TogglSocketMessage:
@@ -243,15 +245,15 @@ class TogglSocket:
     Using TogglSocket in a 'with' statement will implicitly call open() and close() so you don't have to.
     """
 
-    def __init__(self, endpoint, origin, verbose=False):
+    def __init__(self, endpoint, origin, logger=None):
         """
         :param endpoint: Required. The Toggl socket URI to which to connect.
         :param origin: Required. The origin header to use with the socket connection.
-        :param verbose: Optional. If true, output verbose debug messages.
+        :param logger: Optional. Logging facility.
         """
         self.__endpoint = endpoint
         self.__origin = origin
-        self.__verbose = verbose
+        self.__logger = logger or logging.getLogger('togglws.socket')
         self.__session_id = None
         self.__should_run_ws = False
         self.__run_ws_task = None
@@ -273,7 +275,7 @@ class TogglSocket:
         self.__should_run_ws = True
         self.__run_ws_task = asyncio.create_task(self.__run_ws())
         self.__is_open = True
-        self.__log('Opened TogglSocket.')
+        self.__logger.debug('Opened TogglSocket.')
         return
 
     async def close(self):
@@ -288,7 +290,7 @@ class TogglSocket:
         await self.__run_ws_task
         await self.__ws.close()
         self.__is_open = False
-        self.__log('Closed TogglSocket.')
+        self.__logger.debug('Closed TogglSocket.')
         return
 
     async def authenticate(self, token):
@@ -299,7 +301,7 @@ class TogglSocket:
         :param token: Your Toggl API token
         :return:
         """
-        self.__log(f'Authenticating with Toggl server.. : {self.__endpoint}')
+        self.__logger.debug(f'Authenticating with Toggl server.. : {self.__endpoint}')
 
         if not self.is_open():
             raise Exception('Cannot authenticate because socket is not open.')
@@ -326,7 +328,7 @@ class TogglSocket:
         self.__session_id = reply['session_id']
         self.__is_authenticated = True
 
-        self.__log('Successfully authenticated with Toggl server.')
+        self.__logger.debug('Successfully authenticated with Toggl server.')
 
         return
 
@@ -436,20 +438,8 @@ class TogglSocket:
     async def __ws_recv(self):
         """A simple wrapper around the __ws.recv() call, for debugging."""
         msg = await self.__ws.recv()
-        self.__log(f'Received: {msg}')
+        self.__logger.debug(f'Received: {msg}')
         return msg
-
-    def __log(self, msg):
-        """
-        Log a message to the console if the verbose setting is enabled.
-        I probably should have separated this functionality out to sit alongside these classes
-        instead of within them, but.. eh.
-        """
-
-        if not self.__verbose:
-            return
-
-        print(msg)
 
     @staticmethod
     def __is_ping(msg: str) -> bool:

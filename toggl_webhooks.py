@@ -65,10 +65,15 @@ def generate_message_handler(method: str, url: str, **kwargs):
 # The actual handler; in this case, it just sends the data to the server in the manner defined by
 # the config file.
 async def message_handler(action: str, model: str, method: str, url: str, msg: TogglSocketMessage,
-                          trials=None, **request_kwargs):
+                          trials=None, auth=None, **request_kwargs):
     trials = trials or 1
     assert trials >= 1
     trial = 0
+    if auth:
+        if isinstance(auth, list):
+            # Basic Authorization support (user:password)
+            auth = tuple(auth)
+        request_kwargs['auth'] = auth
     while True:
         trial += 1
         if trial > trials:

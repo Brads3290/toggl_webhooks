@@ -67,7 +67,7 @@ def generate_message_handler(method: str, url: str, **kwargs):
 async def message_handler(action: str, model: str, method: str, url: str, msg: TogglSocketMessage,
                           trials=None, **request_kwargs):
     trials = trials or 1
-    assert trials > 1
+    assert trials >= 1
     trial = 0
     while True:
         trial += 1

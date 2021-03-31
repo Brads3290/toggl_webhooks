@@ -4,8 +4,8 @@ from togglws.socket import TogglSocket, TogglSocketMessage
 from typing import Union, List, Callable, Coroutine, Tuple, Any
 
 
-DEFAULT_WS_ENDPOINT = "wss://track.togglws.com/stream"
-DEFAULT_WS_ORIGIN = "https://track.toggl.com"
+DEFAULT_WS_ENDPOINT = "wss://track.toggl.com/stream"
+DEFAULT_WS_ORIGIN = "https://api.track.toggl.com"
 _MESSAGE_HANDLER = Callable[[str, str, TogglSocketMessage], Coroutine[Any, Any, Any]]
 
 

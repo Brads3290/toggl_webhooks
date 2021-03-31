@@ -19,7 +19,7 @@ async def main():
 
     # Load config
     print('Loading config..')
-    with open('toggl_webhooks.json', 'r') as f:
+    with open(sys.argv[1], 'r') as f:
         config = json.load(f)
 
     # Create a TogglClient and open it (opens a connection to the Toggl websocket)

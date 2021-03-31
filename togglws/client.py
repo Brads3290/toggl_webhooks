@@ -1,12 +1,14 @@
-import signal
 import asyncio
-from togglws.socket import TogglSocket, TogglSocketMessage
-from typing import Union, List, Callable, Coroutine, Tuple, Any
+import logging
+import signal
+from typing import Any, Callable, Coroutine, List, Tuple, Union
 
+from togglws.socket import TogglSocket, TogglSocketMessage
 
 DEFAULT_WS_ENDPOINT = "wss://track.toggl.com/stream"
 DEFAULT_WS_ORIGIN = "https://api.track.toggl.com"
 _MESSAGE_HANDLER = Callable[[str, str, TogglSocketMessage], Coroutine[Any, Any, Any]]
+LOGGER = logging.getLogger('togglws')
 
 
 class TogglClient:
@@ -20,21 +22,21 @@ class TogglClient:
     Using TogglClient in a 'with' statement will implicitly call open() and close() so you don't have to.
     """
 
-    def __init__(self, api_token: str, ws_endpoint=DEFAULT_WS_ENDPOINT, ws_origin=DEFAULT_WS_ORIGIN, verbose=False):
+    def __init__(self, api_token: str, ws_endpoint=DEFAULT_WS_ENDPOINT, ws_origin=DEFAULT_WS_ORIGIN, logger=None):
         """
         :param api_token: Required. Your Toggl API token.
         :param ws_endpoint: Optional. Specify a custom Toggl websocket URL. Defaults to DEFAULT_WS_ENDPOINT.
         :param ws_origin: Optional. Specify a custom value for the 'Origin' header. Defaults to DEFAULT_WS_ORIGIN.
-        :param verbose: Optional. Enable verbose connection logging.
+        :param logger: Optional. Logging facility.
         """
         self.__api_token = api_token
         self.__ws_endpoint = ws_endpoint
         self.__ws_origin = ws_origin
-        self.__verbose = verbose
+        self.__logger = logger or LOGGER
 
         self.__should_run = True
         self.__run_task: Union[None, asyncio.Task] = None
-        self.__ws_client = TogglSocket(self.__ws_endpoint, self.__ws_origin, verbose=self.__verbose)
+        self.__ws_client = TogglSocket(self.__ws_endpoint, self.__ws_origin, logger=self.__logger)
 
         self.__handlers: List[Tuple[str, str, _MESSAGE_HANDLER]] = []
         return
@@ -61,7 +63,7 @@ class TogglClient:
 
         # If self.start() succeeded, run until self.__should_run is set to false (or self.__run_task is finished,
         # but that shouldn't happen without __should_run being set to false..)
-        self.__log('Running Toggl client..')
+        self.__logger.debug('Running Toggl client..')
         while self.__should_run and not self.__run_task.done():
             await asyncio.sleep(0.1)
 
@@ -134,7 +136,7 @@ class TogglClient:
         if not self.is_open():
             raise Exception('TogglClient attempted initialisation before .open() was called.')
 
-        self.__log('Initialising TogglClient..')
+        self.__logger.debug('Initialising TogglClient..')
 
         await self.__ws_client.authenticate(self.__api_token)
         return
@@ -204,14 +206,3 @@ class TogglClient:
         """Close the underlying socket when we exit a 'with' clause"""
         await self.close()
         return
-
-    def __log(self, msg):
-        """
-        Log a message to the console if the verbose setting is enabled.
-        I probably should have separated this functionality out to sit alongside these classes
-        instead of within them, but.. eh.
-        """
-        if not self.__verbose:
-            return
-
-        print(msg)

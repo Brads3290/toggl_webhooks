@@ -24,7 +24,7 @@ class TogglSocketMessage:
             elif model == values.M_TAG:
                 return super(TogglSocketMessage, cls).__new__(TogglSocketTagMessage)
 
-        return super(TogglSocketMessage, cls).__new__(cls, model, definition)
+        return super(TogglSocketMessage, cls).__new__(cls)
 
     def __init__(self, model: str, definition):
         self.__model = model.lower()

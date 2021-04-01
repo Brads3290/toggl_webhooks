@@ -93,7 +93,7 @@ async def message_handler(action: str, model: str, method: str, url: str, msg: T
             # retry after a while in case of bad response
             await asyncio.sleep(2 ** (trial - 1))
             continue
-        logger.info(f'{action} {model} -> {res.status_code} {method} {url}')
+        logger.info(f'{action} {model} -> {res.status_code} {method} {url} response: {res.text}')
         break
 
 

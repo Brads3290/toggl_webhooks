@@ -349,12 +349,12 @@ class TogglSocket:
 
     async def __authenticate(self):
         """
-                Authenticates with the Toggl server by sending the given API key and waiting for a valid response
-                from the Toggl server. If the API key is incorrect, the server will not respond. If this happens,
-                an auth attempt will timeout after 5s.
-                :param token: Your Toggl API token
-                :return:
-                """
+        Authenticates with the Toggl server by sending the given API key and waiting for a valid response
+        from the Toggl server. If the API key is incorrect, the server will not respond. If this happens,
+        an auth attempt will timeout after 5s.
+        :param token: Your Toggl API token
+        :return:
+        """
         self.__logger.debug(f'Authenticating with Toggl server.. : {self.__endpoint}')
 
         if not self.is_open():

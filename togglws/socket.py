@@ -374,7 +374,7 @@ class TogglSocket:
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """Calls .close() when entering a with clause"""
+        """Calls .close() when exiting a with clause"""
         await self.close()
         return
 

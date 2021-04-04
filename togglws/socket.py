@@ -245,7 +245,7 @@ class TogglSocket:
     Using TogglSocket in a 'with' statement will implicitly call open() and close() so you don't have to.
     """
 
-    def __init__(self, endpoint, origin, logger=None):
+    def __init__(self, endpoint, origin, token, logger=None):
         """
         :param endpoint: Required. The Toggl socket URI to which to connect.
         :param origin: Required. The origin header to use with the socket connection.
@@ -253,6 +253,7 @@ class TogglSocket:
         """
         self.__endpoint = endpoint
         self.__origin = origin
+        self.__token = token
         self.__logger = logger or logging.getLogger('togglws.socket')
         self.__session_id = None
         self.__should_run_ws = False
@@ -294,9 +295,7 @@ class TogglSocket:
         self.__logger.debug('Closed TogglSocket.')
         return
 
-    async def initialise_connection(self, token):
-        self.__token = token
-
+    async def initialise_connection(self):
         await self.__authenticate()
 
         self.__is_initialised = True

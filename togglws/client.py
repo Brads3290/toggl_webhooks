@@ -36,7 +36,7 @@ class TogglClient:
 
         self.__should_run = True
         self.__run_task: Union[None, asyncio.Task] = None
-        self.__ws_client = TogglSocket(self.__ws_endpoint, self.__ws_origin, logger=self.__logger)
+        self.__ws_client = TogglSocket(self.__ws_endpoint, self.__ws_origin, api_token, logger=self.__logger)
 
         self.__handlers: List[Tuple[str, str, _MESSAGE_HANDLER]] = []
         return

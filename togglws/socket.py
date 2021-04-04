@@ -260,7 +260,8 @@ class TogglSocket:
         self.__ws_message_queue = queue.Queue()
         self.__ws: Union[None, websockets.WebSocketClientProtocol] = None
         self.__is_open = False
-        self.__is_authenticated = False
+        self.__is_initialised = False
+        self.__token = None
         return
 
     async def open(self):
@@ -293,43 +294,12 @@ class TogglSocket:
         self.__logger.debug('Closed TogglSocket.')
         return
 
-    async def authenticate(self, token):
-        """
-        Authenticates with the Toggl server by sending the given API key and waiting for a valid response
-        from the Toggl server. If the API key is incorrect, the server will not respond. If this happens,
-        an auth attempt will timeout after 5s.
-        :param token: Your Toggl API token
-        :return:
-        """
-        self.__logger.debug(f'Authenticating with Toggl server.. : {self.__endpoint}')
+    async def initialise_connection(self, token):
+        self.__token = token
 
-        if not self.is_open():
-            raise Exception('Cannot authenticate because socket is not open.')
+        await self.__authenticate()
 
-        await self.__ws.send(json.dumps({
-            "type": "authenticate",
-            "api_token": token
-        }))
-
-        # We can assume the next message after auth will be the auth response, because the Toggl
-        # server will not send any messages until after auth is complete.
-        timeout_secs = 5
-        task = self.__next_ws_message()
-        try:
-            rawReply = await asyncio.wait_for(task, timeout=timeout_secs)
-        except asyncio.TimeoutError:
-            print(f'Authentication attempt timed out after {timeout_secs} seconds. This could be due to an incorrect '
-                  f'API key.')
-            raise
-
-        reply = json.loads(rawReply)
-
-        # Current we dont use this for anything, but I thought it might be worth storing.
-        self.__session_id = reply['session_id']
-        self.__is_authenticated = True
-
-        self.__logger.debug('Successfully authenticated with Toggl server.')
-
+        self.__is_initialised = True
         return
 
     async def next_message(self) -> Union[TogglSocketMessage, None]:
@@ -364,9 +334,9 @@ class TogglSocket:
         """Returns true if the .open() has been called successfully."""
         return self.__is_open
 
-    def is_authenticated(self):
+    def is_initialised(self):
         """Returns true if the .authenticate() has been called successfully."""
-        return self.__is_authenticated
+        return self.__is_initialised
 
     async def __aenter__(self):
         """Calls .open() when entering a with clause"""
@@ -376,6 +346,42 @@ class TogglSocket:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Calls .close() when exiting a with clause"""
         await self.close()
+        return
+
+    async def __authenticate(self):
+        """
+                Authenticates with the Toggl server by sending the given API key and waiting for a valid response
+                from the Toggl server. If the API key is incorrect, the server will not respond. If this happens,
+                an auth attempt will timeout after 5s.
+                :param token: Your Toggl API token
+                :return:
+                """
+        self.__logger.debug(f'Authenticating with Toggl server.. : {self.__endpoint}')
+
+        if not self.is_open():
+            raise Exception('Cannot authenticate because socket is not open.')
+
+        await self.__ws.send(json.dumps({
+            "type": "authenticate",
+            "api_token": self.__token
+        }))
+
+        # We can assume the next message after auth will be the auth response, because the Toggl
+        # server will not send any messages until after auth is complete.
+        timeout_secs = 5
+        task = self.__next_ws_message()
+        try:
+            rawReply = await asyncio.wait_for(task, timeout=timeout_secs)
+        except asyncio.TimeoutError:
+            print(f'Authentication attempt timed out after {timeout_secs} seconds. This could be due to an incorrect '
+                  f'API key.')
+            raise
+
+        reply = json.loads(rawReply)
+
+        # Current we dont use this for anything, but I thought it might be worth storing.
+        self.__session_id = reply['session_id']
+        self.__logger.debug('Successfully authenticated with Toggl server.')
         return
 
     async def __next_ws_message(self):

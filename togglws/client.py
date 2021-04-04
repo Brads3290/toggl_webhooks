@@ -78,7 +78,8 @@ class TogglClient:
         async background task before returning.
         """
 
-        # Authenticate (and maybe some additional initialisation will be needed in future)
+        # Initialise the underlying socket, checking that it is open first.
+        # This call handles authentication with the Toggl server.
         await self.__initialise()
 
         # Start the async BG task
@@ -132,13 +133,13 @@ class TogglClient:
         return self.__ws_client.is_open()
 
     async def __initialise(self):
-        """Authenticates the underlying websocket with the Toggl server. Requires that it is open."""
+        """Initialises the underlying socket. Requires that it is open."""
         if not self.is_open():
             raise Exception('TogglClient attempted initialisation before .open() was called.')
 
         self.__logger.debug('Initialising TogglClient..')
 
-        await self.__ws_client.authenticate(self.__api_token)
+        await self.__ws_client.initialise_connection(self.__api_token)
         return
 
     async def __run(self):
@@ -149,9 +150,9 @@ class TogglClient:
         if not self.is_open():
             raise Exception('ToggleClient attempted to run before .open() was called.')
 
-        # Shouldn't really be needed (all paths to __run authenticate first).. but just in case
-        if not self.__ws_client.is_authenticated():
-            await self.__ws_client.authenticate(self.__api_token)
+        # Shouldn't really be needed (all paths to __run initialise first).. but just in case
+        if not self.__ws_client.is_initialised():
+            await self.__ws_client.initialise_connection(self.__api_token)
 
         # Repeatedly check for another message, checking if should_run has been changed every 0.1s.
         # When a message is received, pass to __message_handler

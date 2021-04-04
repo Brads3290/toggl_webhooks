@@ -139,7 +139,7 @@ class TogglClient:
 
         self.__logger.debug('Initialising TogglClient..')
 
-        await self.__ws_client.initialise_connection(self.__api_token)
+        await self.__ws_client.initialise_connection()
         return
 
     async def __run(self):
@@ -152,7 +152,7 @@ class TogglClient:
 
         # Shouldn't really be needed (all paths to __run initialise first).. but just in case
         if not self.__ws_client.is_initialised():
-            await self.__ws_client.initialise_connection(self.__api_token)
+            await self.__ws_client.initialise_connection()
 
         # Repeatedly check for another message, checking if should_run has been changed every 0.1s.
         # When a message is received, pass to __message_handler

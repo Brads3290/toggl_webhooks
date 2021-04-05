@@ -389,8 +389,15 @@ class TogglSocket:
         reply = json.loads(rawReply)
 
         # Current we dont use this for anything, but I thought it might be worth storing.
-        self.__session_id = reply['session_id']
-        self.__logger.debug('Successfully authenticated with Toggl server.')
+        if 'session_id' in reply:
+            self.__session_id = reply['session_id']
+            self.__logger.debug('Successfully authenticated with Toggl server.')
+        else:
+            # Since the Toggl server typically does not reply unless we're authenticated.
+            # we assume authentication is OK.
+            self.__logger.debug(f'Received unexpected reply after authenticating ("{rawReply}"). '
+                                f'Assuming authentication OK.')
+
         return
 
     async def __next_ws_message(self):

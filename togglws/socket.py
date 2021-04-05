@@ -287,8 +287,13 @@ class TogglSocket:
             return
 
         self.__should_run_ws = False
-        await self.__run_ws_task
-        await self.__ws.close()
+
+        if self.__run_ws_task is not None:
+            await self.__run_ws_task
+
+        if self.__ws.open:
+            await self.__ws.close()
+
         self.__is_open = False
         self.__logger.debug('Closed TogglSocket.')
         return

@@ -2,7 +2,8 @@ import asyncio
 import json
 import logging
 import queue
-from typing import Union
+from typing import Union, Optional
+from websockets.exceptions import ConnectionClosedError, ConnectionClosedOK
 
 import dateutil.parser
 import websockets
@@ -412,7 +413,17 @@ class TogglSocket:
         :return:
         """
 
-        while self.__should_run_ws:
+        errors = 0
+        exc: Optional[Exception] = None
+        while self.__should_run_ws and errors < 5:
+            if errors > 0:
+
+                # Don't wait on the first attempt, as we're probably just reconnecting after
+                # the server's hourly disconnect
+                wait_for = 2.5 * (errors - 1)
+                self.__logger.debug(f'Waiting for {wait_for} seconds before retry..')
+                await asyncio.sleep(wait_for)
+
             next_msg_task = asyncio.create_task(self.__ws_recv())
 
             while not next_msg_task.done() and self.__should_run_ws:
@@ -420,8 +431,36 @@ class TogglSocket:
 
             if next_msg_task.done():
 
-                # We have a message; now process it based on what it is.
-                next_msg = next_msg_task.result()
+                # Wrap this in a try/catch to handle the case where the socket is closed, and attempt
+                # to reconnect if that happens.
+                try:
+                    # We have a message; now process it based on what it is.
+                    next_msg = next_msg_task.result()
+                except Exception as e:
+                    errors += 1
+                    exc = e
+                    if type(e) not in [ConnectionClosedError, ConnectionClosedOK]:
+                        self.__logger.warning(f'Unhandled error occurred reading from socket - {type(e)}: {e}')
+                        continue
+                    elif errors < 5:
+                        # The socket has been closed. Check if it was by us:
+                        if not self.__should_run_ws:
+                            self.__logger.debug('__run_ws aborting: should_run is False.')
+                            return None  # We closed it, so we should return
+
+                        # Server closed it, so we should open a new one
+                        self.__logger.debug('Socket disconnected by server. Attempting to reconnect..')
+
+                        self.__ws = await self.__new_connection()
+                        await self.initialise_connection()
+                        continue
+                    else:
+                        self.__logger.error('Socket disconnected by server and all reconnection attempts failed.')
+                        break
+
+                # Successfully retrieved message
+                errors = 0
+
                 if TogglSocket.__is_ping(next_msg):
                     # If it's a ping, return a pong
                     await self.__ws.send(json.dumps({'type': 'pong'}))
@@ -441,6 +480,11 @@ class TogglSocket:
                 except asyncio.CancelledError as e:
                     pass
 
+        if self.__should_run_ws:
+            # This means we failed due to errors
+            self.__logger.error(f'Fatal error running websocket connection - {type(exc)}: {exc}')
+            pass
+
         return
 
     async def __new_connection(self):
@@ -449,6 +493,7 @@ class TogglSocket:
 
     async def __ws_recv(self):
         """A simple wrapper around the __ws.recv() call, for debugging."""
+
         msg = await self.__ws.recv()
         self.__logger.debug(f'Received: {msg}')
         return msg

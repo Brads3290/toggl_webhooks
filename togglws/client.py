@@ -166,8 +166,15 @@ class TogglClient:
             while self.__should_run and not msg_task.done():
                 await asyncio.sleep(0.1)
 
-            if msg_task.done() and msg_task.result() is not None:
-                await self.__message_handler(msg_task.result())
+            if msg_task.done():
+                try:
+                    res = msg_task.result()
+                except Exception as e:
+                    self.__logger.warning(f'Error retrieving next message from Toggl: {e}')
+                    continue
+
+                if res is not None:
+                    await self.__message_handler(msg_task.result())
 
         return
 

@@ -333,7 +333,7 @@ class TogglSocket:
         msg = json.loads(raw_msg)
 
         if 'model' not in msg:
-            raise Exception('Missing "model" key')
+            raise Exception(f'Missing "model" key in message: {raw_msg}')
 
         # TogglSocketMessage will construct as a different subclass depending on which model the JSON matches.
         return TogglSocketMessage(msg['model'], msg)

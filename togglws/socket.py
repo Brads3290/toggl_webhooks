@@ -272,9 +272,7 @@ class TogglSocket:
         if self.is_open():
             return
 
-        self.__ws = await websockets.connect(self.__endpoint, origin=self.__origin)
-        self.__should_run_ws = True
-        self.__run_ws_task = asyncio.create_task(self.__run_ws())
+        self.__ws = await self.__new_connection()
         self.__is_open = True
         self.__logger.debug('Opened TogglSocket.')
         return
@@ -292,6 +290,12 @@ class TogglSocket:
         await self.__ws.close()
         self.__is_open = False
         self.__logger.debug('Closed TogglSocket.')
+        return
+
+    def start_listening(self):
+        self.__should_run_ws = True
+        self.__run_ws_task = asyncio.create_task(self.__run_ws())
+        self.__logger.debug('TogglSocket now listening for messages.')
         return
 
     async def initialise_connection(self):
@@ -367,9 +371,8 @@ class TogglSocket:
         # We can assume the next message after auth will be the auth response, because the Toggl
         # server will not send any messages until after auth is complete.
         timeout_secs = 5
-        task = self.__next_ws_message()
         try:
-            rawReply = await asyncio.wait_for(task, timeout=timeout_secs)
+            rawReply = await asyncio.wait_for(self.__ws_recv(), timeout=timeout_secs)
         except asyncio.TimeoutError:
             print(f'Authentication attempt timed out after {timeout_secs} seconds. This could be due to an incorrect '
                   f'API key.')
@@ -438,6 +441,10 @@ class TogglSocket:
                     pass
 
         return
+
+    async def __new_connection(self):
+        self.__logger.debug(f'Connecting to {self.__endpoint}..')
+        return await websockets.connect(self.__endpoint, origin=self.__origin)
 
     async def __ws_recv(self):
         """A simple wrapper around the __ws.recv() call, for debugging."""

@@ -82,6 +82,9 @@ class TogglClient:
         # This call handles authentication with the Toggl server.
         await self.__initialise()
 
+        # Start the listener process on the underlying socket
+        self.__ws_client.start_listening()
+
         # Start the async BG task
         self.__run_task = asyncio.create_task(self.__run())
         return

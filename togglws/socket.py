@@ -262,7 +262,6 @@ class TogglSocket:
         self.__ws: Union[None, websockets.WebSocketClientProtocol] = None
         self.__is_open = False
         self.__is_initialised = False
-        self.__token = None
         return
 
     async def open(self):

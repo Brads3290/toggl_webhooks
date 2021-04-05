@@ -358,7 +358,8 @@ class TogglSocket:
         :param token: Your Toggl API token
         :return:
         """
-        self.__logger.debug(f'Authenticating with Toggl server.. : {self.__endpoint}')
+        masked_token = self.__token[:2] + "*" * (len(self.__token) - 4) + self.__token[-2:]
+        self.__logger.debug(f'Authenticating with Toggl server.. : {self.__endpoint} (token: {masked_token})')
 
         if not self.is_open():
             raise Exception('Cannot authenticate because socket is not open.')

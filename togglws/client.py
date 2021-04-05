@@ -86,6 +86,7 @@ class TogglClient:
         self.__ws_client.start_listening()
 
         # Start the async BG task
+        self.__logger.debug('Starting listener task..')
         self.__run_task = asyncio.create_task(self.__run())
         return
 

@@ -261,6 +261,7 @@ class TogglSocket:
         self.__run_ws_task = None
         self.__ws_message_queue = queue.Queue()
         self.__ws: Union[None, websockets.WebSocketClientProtocol] = None
+        self.__ws_recv_lock = asyncio.Lock()
         self.__is_open = False
         self.__is_initialised = False
         return
@@ -499,9 +500,16 @@ class TogglSocket:
     async def __ws_recv(self):
         """A simple wrapper around the __ws.recv() call, for debugging."""
 
-        msg = await self.__ws.recv()
-        self.__logger.debug(f'Received: {msg}')
-        return msg
+        if self.__ws_recv_lock.locked():
+            # If you're seeing this message, there's probably some kind of synchronisation issue with
+            # authenticating the socket, and the background listener. Both methods call __ws_recv, but they're
+            # not supposed to do so at the same time.
+            self.__logger.warning('Websocket receive method is blocked; waiting..')
+
+        async with self.__ws_recv_lock:
+            msg = await self.__ws.recv()
+            self.__logger.debug(f'Received: {msg}')
+            return msg
 
     @staticmethod
     def __is_ping(msg: str) -> bool:

@@ -382,8 +382,8 @@ class TogglSocket:
         try:
             rawReply = await asyncio.wait_for(self.__ws_recv(), timeout=timeout_secs)
         except asyncio.TimeoutError:
-            print(f'Authentication attempt timed out after {timeout_secs} seconds. This could be due to an incorrect '
-                  f'API key.')
+            self.__logger.error(f'Authentication attempt timed out after {timeout_secs} seconds. '
+                                f'This could be due to an incorrect API key.')
             raise
 
         reply = json.loads(rawReply)

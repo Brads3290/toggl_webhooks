@@ -209,7 +209,7 @@ class TogglClient:
         __signal_handler instructs background tasks to stop.
         It is called in response to receiving a SIGINT.
         """
-        print('TogglClient detected SIGINT')
+        self.__logger.debug('TogglClient detected SIGINT')
         self.__should_run = False
         return
 

@@ -90,11 +90,15 @@ class TogglClient:
         self.__run_task = asyncio.create_task(self.__run())
         return
 
-    async def wait(self):
+    async def wait(self, handle_os_signals=True):
         """
         Waits for the socket listener task to end
         :return:
         """
+
+        if handle_os_signals:
+            signal.signal(signal.SIGINT, self.__signal_handler)
+
         await self.__run_task
         return
 

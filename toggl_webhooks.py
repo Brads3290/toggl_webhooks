@@ -76,20 +76,23 @@ async def message_handler(action: str, model: str, method: str, url: str, msg: T
         request_kwargs['auth'] = auth
     while True:
         trial += 1
-        if trial > trials:
-            logger.error(f'{action} {model} -> {method} {url} stop trials')
-            break
         try:
             res = requests.request(method, url, json=msg.to_dict(), **request_kwargs)
         except requests.RequestException as e:
             logger.warning(f'{action} {model} -> {method} {url} failed, trial: {trial}. retrying')
             logger.exception(e)
+            if trial >= trials:
+                logger.error(f'{action} {model} -> {method} {url} stop trials')
+                break
             # retry after a while in case of exception
             await asyncio.sleep(2 ** (trial - 1))
             continue
         if res.status_code >= 400:
             logger.warning(f'{action} {model} -> {res.status_code} {method} {url} failed, trial: {trial}. retrying')
             logger.debug(f'{action} {model} -> {res.status_code} {method} {url} response: {res.text}')
+            if trial >= trials:
+                logger.error(f'{action} {model} -> {method} {url} stop trials')
+                break
             # retry after a while in case of bad response
             await asyncio.sleep(2 ** (trial - 1))
             continue
